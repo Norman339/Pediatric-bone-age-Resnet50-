@@ -86,7 +86,7 @@ async def health_check(request: Request):
     }
 
 # Hugging Face specific middleware
-@app.middleware("http")
+@app.middleware("http")  # Add this middleware
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
     response.headers["X-Frame-Options"] = "SAMEORIGIN"
