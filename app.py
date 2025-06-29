@@ -96,6 +96,12 @@ with gr.Blocks(title="Bone Age Predictor", theme=gr.themes.Soft()) as demo:
     gr.Markdown("# 🦴 Pediatric Bone Age Predictor")
     gr.Markdown("Upload an X-ray image of a child's hand/wrist to predict their bone age.")
     
+    # Add loading message
+    if model is None:
+        gr.Markdown("⚠️ **Loading model... Please wait a moment for the first prediction.**")
+    else:
+        gr.Markdown("✅ **Model loaded successfully! Ready for predictions.**")
+    
     with gr.Row():
         with gr.Column():
             input_image = gr.Image(label="Upload X-ray Image", type="pil")
@@ -117,7 +123,9 @@ with gr.Blocks(title="Bone Age Predictor", theme=gr.themes.Soft()) as demo:
     3. Click 'Predict Bone Age' to get the result
     
     ### Note:
-    This tool is for educational/research purposes. Always consult with medical professionals for clinical decisions.
+    - First prediction may take 2-3 minutes as the model loads
+    - Subsequent predictions will be faster
+    - This tool is for educational/research purposes. Always consult with medical professionals for clinical decisions.
     """)
     
     # Connect the prediction function
