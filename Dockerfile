@@ -24,4 +24,6 @@ ENV GRADIO_SERVER_NAME=0.0.0.0
 ENV GRADIO_SERVER_PORT=7860
 
 EXPOSE 7860
+
+# Run the Gradio app directly
 CMD ["python", "app.py"]
