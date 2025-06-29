@@ -2,11 +2,17 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
+# Force cache invalidation
+ARG CACHEBUST=1
+
 # Install system dependencies in one layer
 RUN apt-get update && apt-get install -y \
     libgl1 \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
+
+# Copy version file first to force cache invalidation
+COPY version.txt .
 
 # Copy requirements first for better caching
 COPY requirements.txt .
@@ -25,5 +31,5 @@ ENV GRADIO_SERVER_PORT=7860
 
 EXPOSE 7860
 
-# Run the Gradio app directly
-CMD ["python", "app.py"]
+# Run the new Gradio app
+CMD ["python", "gradio_app.py"]
