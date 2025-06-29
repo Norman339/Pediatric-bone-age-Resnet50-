@@ -7,14 +7,14 @@ import torch.nn as nn
 import torchvision.models as models
 import io
 from torchvision import transforms
-import os  # Important for Hugging Face deployment
+import os
 
 app = FastAPI(title="Bone Age Prediction API")
 
-# Critical for Hugging Face Spaces
+# Critical Hugging Face configuration
 app.root_path = os.getenv("HF_HOME", "")
 
-# Enhanced CORS configuration
+# Enhanced CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -86,8 +86,12 @@ async def health_check(request: Request):
     }
 
 # Hugging Face specific middleware
-@app.middleware("http")  # Add this middleware
+@app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
     response.headers["X-Frame-Options"] = "SAMEORIGIN"
     return response
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app:app", host="0.0.0.0", port=7860, reload=True)
