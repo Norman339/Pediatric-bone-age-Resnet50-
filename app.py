@@ -6,15 +6,24 @@ from torchvision import transforms
 from PIL import Image
 import io
 import os
+import time
+import threading
 
 # Device configuration (must use CPU for Hugging Face Spaces)
 device = torch.device("cpu")
 
 class BoneAgeModel(nn.Module):
-    def __init__(self):
+    def __init__(self, use_simple_model=False):
         super().__init__()
-        self.resnet = models.resnet50(weights=None)
-        self.resnet.fc = nn.Linear(2048, 128)
+        if use_simple_model:
+            # Use ResNet-18 for faster inference
+            self.resnet = models.resnet18(weights=None)
+            self.resnet.fc = nn.Linear(512, 128)
+        else:
+            # Use ResNet-50 (original)
+            self.resnet = models.resnet50(weights=None)
+            self.resnet.fc = nn.Linear(2048, 128)
+        
         self.fc = nn.Linear(128 + 1, 1)
     
     def forward(self, x, gender):
@@ -84,15 +93,46 @@ def predict_bone_age(image, gender):
         image_tensor = transform(image).unsqueeze(0).to(device)
         gender_tensor = torch.tensor([gender], dtype=torch.float32).to(device)
         
-        # Make prediction
-        with torch.no_grad():
-            prediction = model(image_tensor, gender_tensor)
-            bone_age = prediction.item()
-            
-        return f"Predicted Bone Age: {bone_age:.1f} years"
+        # Clear cache to free memory
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        
+        # Make prediction with timeout
+        result = [None]
+        error = [None]
+        
+        def run_prediction():
+            try:
+                with torch.no_grad():
+                    prediction = model(image_tensor, gender_tensor)
+                    bone_age = prediction.item()
+                    result[0] = f"Predicted Bone Age: {bone_age:.1f} years"
+            except Exception as e:
+                error[0] = str(e)
+        
+        # Run prediction with 30-second timeout
+        thread = threading.Thread(target=run_prediction)
+        thread.start()
+        thread.join(timeout=30)
+        
+        if thread.is_alive():
+            return "❌ Prediction timed out (took too long). Try with a smaller image or restart the app."
+        
+        if error[0]:
+            if "out of memory" in error[0].lower():
+                return "❌ Error: Out of memory. Try with a smaller image or restart the app."
+            else:
+                return f"❌ Error: {error[0]}"
+        
+        # Clear tensors from memory
+        del image_tensor, gender_tensor
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        
+        return result[0]
     
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"❌ Error: {str(e)}"
 
 # Create Gradio interface
 with gr.Blocks(title="Bone Age Predictor", theme=gr.themes.Soft()) as demo:
@@ -135,7 +175,8 @@ with gr.Blocks(title="Bone Age Predictor", theme=gr.themes.Soft()) as demo:
     predict_btn.click(
         fn=lambda img, g: predict_bone_age(img, 1 if g == "Male" else 0),
         inputs=[input_image, gender],
-        outputs=output_text
+        outputs=output_text,
+        show_progress=True
     )
 
 # Launch the app
