@@ -25,7 +25,9 @@ class BoneAgeModel(nn.Module):
 # Load model
 model = None
 try:
+    print("🔄 Loading model...")
     model = BoneAgeModel().to(device)
+    
     # Check if model file exists in current directory or parent directory
     model_path = 'bone_age_res50_epoch_101.pth'
     if not os.path.exists(model_path):
@@ -34,6 +36,7 @@ try:
     if not os.path.exists(model_path):
         raise FileNotFoundError(f"Model file not found at {model_path}")
     
+    print(f"📁 Loading model from: {model_path}")
     checkpoint = torch.load(model_path, map_location=device)
     
     # Handle different checkpoint formats
