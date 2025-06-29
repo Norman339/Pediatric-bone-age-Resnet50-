@@ -7,8 +7,12 @@ RUN apt-get update && apt-get install -y libgl1 libglib2.0-0
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy the application files
 COPY . .
+
+# Copy the model file from parent directory (this will be done during build context)
+# The model file should be copied to the build context or downloaded during runtime
 
 # Critical Hugging Face settings
 EXPOSE 7860
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860", "--proxy-headers", "--root-path", "/"]
+CMD ["python", "app.py"]
