@@ -26,9 +26,26 @@ class BoneAgeModel(nn.Module):
         self.fc = nn.Linear(128 + 1, 1)
 
 # Load model
-model = BoneAgeModel().to(device)
-model.load_state_dict(torch.load('bone_age_res50_epoch_101.pth', map_location=device))
-model.eval()
+try:
+    model = BoneAgeModel().to(device)
+    checkpoint = torch.load('bone_age_res50_epoch_101.pth', map_location=device)
+    
+    # Handle different checkpoint formats
+    if 'model_state_dict' in checkpoint:
+        # Load only the model weights if checkpoint contains training metadata
+        model.load_state_dict(checkpoint['model_state_dict'])
+    elif 'state_dict' in checkpoint:
+        # Alternative common format
+        model.load_state_dict(checkpoint['state_dict'])
+    else:
+        # Assume the file is just the state_dict
+        model.load_state_dict(checkpoint)
+        
+    model.eval()
+    print("✅ Model loaded successfully")
+except Exception as e:
+    print(f"❌ Model loading failed: {str(e)}")
+    raise RuntimeError("Failed to load model") from e
 
 # Image transformations
 transform = transforms.Compose([
