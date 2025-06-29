@@ -62,8 +62,27 @@ except Exception as e:
     print(f"❌ Model loading failed: {str(e)}")
     model = None
 
+class FixInversion:
+    def __call__(self, img):
+        # Convert to grayscale and get pixel statistics
+        grayscale = img.convert("L")
+        histogram = grayscale.histogram()
+
+        # Check average brightness
+        avg_brightness = sum(i * h for i, h in enumerate(histogram)) / sum(histogram)
+
+        # If the average brightness is high, likely inverted -> invert it
+        if avg_brightness > 168:
+            img = ImageOps.invert(img)
+            print("done")
+
+        return img
+
+
+
+
 # Image transformations
-transform = transforms.Compose([
+transform = transforms.Compose([FixInversion(),
     transforms.Resize(256),
     transforms.CenterCrop(224),
     transforms.ToTensor(),
