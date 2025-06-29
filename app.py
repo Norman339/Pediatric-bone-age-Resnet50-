@@ -14,8 +14,10 @@ app = FastAPI(title="Bone Age Prediction API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,  # Add this
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]  # Add this
 )
 
 # Device configuration
